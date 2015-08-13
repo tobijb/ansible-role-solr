@@ -31,6 +31,8 @@
 # and the path attribute is not defined, BOOM.
 - set_fact:
     solr_core_properties_results: "{{ solr_core_properties.results | map(attribute='stat') | selectattr('path', 'defined') | join(',', attribute='path') }}"
+  when:
+    solr_core_properties.stat.path is defined
 
 # Add the cores via the curl request
 - name: Configure SOLR to use the core
@@ -42,7 +44,7 @@
     - default_solr_cores
     - global_solr_cores
     - override_solr_cores
-  when: "solr_core_properties_results.find('{{ item.name }}') == -1"
+  when: "solr_core_properties_results is defined and solr_core_properties_results.find('{{ item.name }}') == -1"
 
 # Run Data Import
 - name: full-import of each data import
@@ -53,6 +55,6 @@
     - default_solr_cores
     - global_solr_cores
     - override_solr_cores
-  when: "solr_core_properties_results.find('{{ item.name }}') == -1 and item.data_import is true"
+  when: "solr_core_properties_results is defined and solr_core_properties_results.find('{{ item.name }}') == -1 and item.data_import is true"
 
 
