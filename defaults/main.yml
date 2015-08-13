@@ -6,7 +6,7 @@ solr_user: solr
 
 solr_version: "4.10.4"
 
-solr_http_mirror: 'http://tobi-thirdparty-repo.s3.amazonaws.com'
+solr_http_mirror: "http://archive.apache.org/dist/lucene/solr/"
 solr_install_path: /opt/solr
 solr_home: /var/solr
 solr_log_file_path: /var/log/solr.log
