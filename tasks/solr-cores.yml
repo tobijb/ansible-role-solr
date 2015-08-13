@@ -11,7 +11,7 @@
   with_flattened:
     - default_solr_cores
     - global_solr_cores
-    - specific_solr_cores
+    - override_solr_cores
 
 - name: Check if cores are configured
   stat:
@@ -20,9 +20,8 @@
   with_flattened:
     - default_solr_cores
     - global_solr_cores
-    - specific_solr_cores
+    - override_solr_cores
 
-#- debug: var=solr_core_properties
 # HOLY MOTHER OF GOD IT WORKS!!!
 # This monstrositiy takes the results of the above flattened array stat calls and puts it into a single string
 # .. That string is then used with Python's find function to look for the items in the flatted list below.. If
@@ -32,8 +31,6 @@
 # and the path attribute is not defined, BOOM.
 - set_fact:
     solr_core_properties_results: "{{ solr_core_properties.results | map(attribute='stat') | selectattr('path', 'defined') | join(',', attribute='path') }}"
-#- debug: var=solr_core_properties_results.find('blah')
-#- debug: var=solr_core_properties_results
 
 # Add the cores via the curl request
 - name: Configure SOLR to use the core
@@ -44,7 +41,7 @@
   with_flattened:
     - default_solr_cores
     - global_solr_cores
-    - specific_solr_cores
+    - override_solr_cores
   when: "solr_core_properties_results.find('{{ item.name }}') == -1"
 
 # Run Data Import
@@ -55,7 +52,7 @@
   with_flattened:
     - default_solr_cores
     - global_solr_cores
-    - specific_solr_cores
+    - override_solr_cores
   when: "solr_core_properties_results.find('{{ item.name }}') == -1 and item.data_import is true"
 
 

@@ -16,11 +16,12 @@ solr_port: "8983"
 solr_xms: "256M"
 solr_xmx: "512M"
 
+global_solr_cores: []
+override_solr_cores: []
 default_solr_cores: []
 #default_solr_cores:
 #  - name: collection1
 #    dir: "{{ solr_install_path }}/example/solr/collection1"
 #    data_import: True
 
-global_solr_cores: []
-specific_solr_cores: []
+
