@@ -1,0 +1,61 @@
+---
+# Pause for 20 seconds to give the app server some time to warmup
+- pause: seconds=20
+
+# Symlink the core into place
+- name: symlink cores to /var/solr
+  file:
+    state: link
+    src: "{{ item.dir }}"
+    dest: "{{ solr_home }}/{{ item.name }}"
+  with_flattened:
+    - default_solr_cores
+    - global_solr_cores
+    - specific_solr_cores
+
+- name: Check if cores are configured
+  stat:
+    path: "{{ solr_home }}/{{ item.name }}/core.properties"
+  register: solr_core_properties
+  with_flattened:
+    - default_solr_cores
+    - global_solr_cores
+    - specific_solr_cores
+
+#- debug: var=solr_core_properties
+# HOLY MOTHER OF GOD IT WORKS!!!
+# This monstrositiy takes the results of the above flattened array stat calls and puts it into a single string
+# .. That string is then used with Python's find function to look for the items in the flatted list below.. If
+# the item is not found in the string, it calls the SOLR url to create it.  Wow.
+# map is used for a mandatory attribute enumerator..
+# selectattr is used as an optional attribute, if it doesn't exist the join doesn't blow up.  If you don't use selectattr
+# and the path attribute is not defined, BOOM.
+- set_fact:
+    solr_core_properties_results: "{{ solr_core_properties.results | map(attribute='stat') | selectattr('path', 'defined') | join(',', attribute='path') }}"
+#- debug: var=solr_core_properties_results.find('blah')
+#- debug: var=solr_core_properties_results
+
+# Add the cores via the curl request
+- name: Configure SOLR to use the core
+  uri:
+    url: "http://{{ solr_server }}:{{ solr_port }}/solr/admin/cores?action=CREATE&name={{ item.name }}&instanceDir={{ item.name }}&config=solrconfig.xml&schema=schema.xml&dataDir={{ solr_home }}/{{ item.name }}_data"
+    return_content: no
+  register: solr_core_create
+  with_flattened:
+    - default_solr_cores
+    - global_solr_cores
+    - specific_solr_cores
+  when: "solr_core_properties_results.find('{{ item.name }}') == -1"
+
+# Run Data Import
+- name: full-import of each data import
+  uri:
+    url: "http://{{ solr_server }}:{{ solr_port }}/solr/{{ item.name }}/dataimport?command=full-import&clean=true&commit=true&wt=json&indent=true&verbose=false&optimize=false&debug=false"
+    return_content: no
+  with_flattened:
+    - default_solr_cores
+    - global_solr_cores
+    - specific_solr_cores
+  when: "solr_core_properties_results.find('{{ item.name }}') == -1 and item.data_import is true"
+
+

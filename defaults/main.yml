@@ -6,10 +6,21 @@ solr_user: solr
 
 solr_version: "4.10.4"
 
+solr_http_mirror: 'http://tobi-thirdparty-repo.s3.amazonaws.com'
 solr_install_path: /opt/solr
 solr_home: /var/solr
 solr_log_file_path: /var/log/solr.log
 
+solr_server: "localhost"
 solr_port: "8983"
 solr_xms: "256M"
 solr_xmx: "512M"
+
+default_solr_cores: []
+#default_solr_cores:
+#  - name: collection1
+#    dir: "{{ solr_install_path }}/example/solr/collection1"
+#    data_import: True
+
+global_solr_cores: []
+specific_solr_cores: []
