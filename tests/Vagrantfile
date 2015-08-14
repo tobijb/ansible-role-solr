@@ -1,0 +1,46 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+$install_ansible_script = <<ANSIBLE_SCRIPT
+#!/bin/bash
+if [[ ! -e /etc/apt/sources.list.d/ansible-ansible-trusty.list ]]; then
+  apt-get install -y software-properties-common
+  apt-add-repository ppa:ansible/ansible
+  apt-get update
+  apt-get -y install ansible
+fi
+ANSIBLE_SCRIPT
+
+$playbook = ENV['PLAYBOOK'] || 'test-solr-4x.yml'
+$hostname = "vagrant-ansible-role-solr-build"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  # Build Base Box
+  config.vm.define $hostname do |client|
+
+    client.vm.hostname = $hostname
+    client.vm.box = 'trusty-server-cloudimg-amd64-vagrant-disk1'
+    client.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+    client.vm.network "private_network", ip: "192.168.81.99"
+    client.vm.network :forwarded_port, guest: 22,   host: 10023, id: "ssh"
+
+    ## Local Virtualbox
+    client.vm.provider "virtualbox" do |v|
+      v.memory = 2048
+      v.cpus = 2
+    end
+
+    # Install Ansible!
+    client.vm.provision "shell", upload_path: "/tmp/install_ansible.sh", inline: $install_ansible_script
+
+    # Provision with Ansible
+    client.vm.provision "ansible" do |ansible|
+      ansible.verbose = "v"
+      ansible.playbook = $playbook
+    end
+
+  end
+end

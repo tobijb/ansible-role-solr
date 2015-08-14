@@ -1,10 +1,10 @@
 ---
-- hosts: localhost
-  remote_user: root
+- hosts: vagrant-ansible-role-solr-build
+  sudo: true
   vars:
     solr_version: "4.10.4"
     java_packages:
       - openjdk-7-jdk
   roles:
     - geerlingguy.java
-    - ansible-role-solr
+    - ../../
