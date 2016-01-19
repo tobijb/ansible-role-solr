@@ -2,15 +2,19 @@
 - include: user.yml
   when: solr_create_user
 
-- name: Set solr_filename for Solr 4.x.
+- name: Set solr_version_major fact
   set_fact:
-    "solr_filename=solr-{{ solr_version }}"
-  when: "solr_version.split('.')[0] == '4'"
+    solr_version_major: "{{ solr_version.split('.')[0]}}"
+
+- name: Set solr_filename for versions > Solr 3.
+  set_fact:
+    solr_filename: "solr-{{ solr_version }}"
+  when: solr_version_major > '3'
 
 - name: Set solr_filename for Solr 3.x.
   set_fact:
     solr_filename: "apache-solr-{{ solr_version }}"
-  when: "solr_version.split('.')[0] == '3'"
+  when: solr_version_major == '4'
 
 - name: Download Solr.
   get_url:
@@ -18,18 +22,32 @@
     dest: "{{ solr_workspace }}/{{ solr_filename }}.tgz"
     force: no
 
-- name: Expand Solr.
+- name: Expand Solr war.
   command: >
     tar -C {{ solr_workspace }} -xvzf {{ solr_workspace }}/{{ solr_filename }}.tgz
     creates={{ solr_workspace }}/{{ solr_filename }}/dist/{{ solr_filename }}.war
+  when: solr_version_major <= '4'
 
-- name: Check if Solr is already installed.
-  stat: "path={{ solr_install_path }}/dist/{{ solr_filename }}.war"
-  register: solr_war_file
+- name: Expand Solr 5.
+  command: "tar -C {{ solr_workspace }} -xvzf {{ solr_workspace }}/{{ solr_filename }}.tgz"
+  args:
+    creates: "{{ solr_workspace }}/{{ solr_filename }}/bin/solr"
+
+- name: Check if Solr 4 or older is already installed.
+  stat:
+    path: "{{ solr_install_path }}/dist/{{ solr_filename }}.war"
+  register: solr_installed_file
+  when: solr_version_major <= '4'
+
+- name: Check if Solr 5 is already installed.
+  stat:
+    path: "{{ solr_install_path }}/bin/solr"
+  register: solr_installed_file
+  when: solr_version_major == '5'
 
 - name: Copy Solr into place.
   command: "cp -r {{ solr_workspace }}/{{ solr_filename }} {{ solr_install_path }}"
-  when: not solr_war_file.stat.exists
+  when: solr_installed_file.stat is defined and not solr_installed_file.stat.exists
 
 - name: Ensure Solr install files are owned by the solr_user.
   file:
@@ -37,9 +55,10 @@
     owner: "{{ solr_user }}"
     group: "{{ solr_user }}"
     recurse: yes
-  when: not solr_war_file.stat.exists
+  when: not solr_installed_file.stat.exists
 
 - include: solr-home.yml
+
 - include: init-script.yml
 
 # This runs URL operations against the server so beware..

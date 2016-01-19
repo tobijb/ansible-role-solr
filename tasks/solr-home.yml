@@ -12,10 +12,6 @@
     mode: 0755
   when: not solr_example.stat.exists
 
-- name: Copy Solr example into solr_home.
-  shell: "cp -r {{ solr_install_path }}/example/solr/* {{ solr_home }}"
-  when: not solr_example.stat.exists
-
 - name: Fix the example solrconfig.xml file.
   replace:
     dest: "{{ solr_home }}/collection1/conf/solrconfig.xml"

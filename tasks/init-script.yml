@@ -10,9 +10,16 @@
 
 - name: Copy solr init script into place.
   template:
-    src: "solr-init-{{ ansible_os_family }}.j2"
+    src: "solr-{{ solr_version_major }}-init-{{ ansible_os_family }}.j2"
     dest: "/etc/init.d/{{ solr_service_name }}"
     mode: 0755
+
+- name: Copy solr default environment config for Debian
+  template:
+    src: "default/solr-{{ solr_version_major }}.in.sh.j2"
+    dest: "/etc/default/solr.in.sh"
+    mode: 0755
+  when: ansible_os_family == "Debian"
 
 - name: Ensure daemon is installed (Debian).
   apt: name=daemon state=installed
