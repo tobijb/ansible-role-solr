@@ -1,0 +1,11 @@
+---
+- hosts: vagrant-ansible-role-solr-build
+  sudo: true
+  vars:
+    solr_version: "5.4.0"
+    solr_home: "{{ solr_install_path }}/server/solr"
+    java_packages:
+      - openjdk-7-jdk
+  roles:
+    - geerlingguy.java
+    - ../../

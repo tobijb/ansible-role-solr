@@ -14,7 +14,7 @@ if [[ ! -e /etc/apt/sources.list.d/ansible-ansible-trusty.list ]]; then
 fi
 ANSIBLE_SCRIPT
 
-$playbook = ENV['PLAYBOOK'] || 'test-solr-4x.yml'
+$playbook = ENV['PLAYBOOK'] || 'test-solr-5x.yml'
 $hostname = "vagrant-ansible-role-solr-build"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
