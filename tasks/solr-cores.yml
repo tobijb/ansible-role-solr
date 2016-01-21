@@ -1,13 +1,19 @@
 ---
-# Pause for 20 seconds to give the app server some time to warmup
 - pause: seconds=20
 
-# Symlink the core into place
-- name: symlink cores to /var/solr
+- name: Copy cores into place
+  command: "cp -r {{ item.dir }} {{ solr_home }}/{{ item.name }}"
+  with_flattened:
+    - default_solr_cores
+    - global_solr_cores
+    - override_solr_cores
+
+- name: Chown the core to the solr user
   file:
-    state: link
-    src: "{{ item.dir }}"
-    dest: "{{ solr_home }}/{{ item.name }}"
+    path: "{{ solr_home }}/{{ item.name }}"
+    mode: u=rwX,g=rX,o=rX
+    owner: "{{ solr_user }}"
+    recurse: yes
   with_flattened:
     - default_solr_cores
     - global_solr_cores
